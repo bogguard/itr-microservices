@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-demo
+  labels:
+    name: {{ .Release.Name }}-demo
+    {{- template "labels" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-demo
+    spec:
+      containers:
+      - name: demo
+        image: {{ .Values.demo.image }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+          name: "http"
+        - containerPort: {{ .Values.service.internalDebugPort }}
+          name: "debug"

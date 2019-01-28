@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          #image: bogguard/demo
+          image: 406660174961.dkr.ecr.eu-west-1.amazonaws.com/workshop-canary
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: "http"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector:
+    app: demo
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer

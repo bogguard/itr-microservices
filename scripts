@@ -1,0 +1,109 @@
+mvn springboot:run
+
+#to local docker daemon
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0:dockerBuild
+
+#to docker registry
+set m2 settings (add server for docker registry)
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0:build -Dimage=registry.hub.docker.com/bogguard/my-app
+
+
+#with profile -- daemon
+mvn compile jib:dockerBuild -Pjib
+#with profile -- registry
+mvn compile jib:build -Pjib
+
+docker images
+
+#run docker
+docker container run --name demo -p 8080:8080 -d bogguard/demo
+
+#http://localhost:8080/hello
+
+#remove container
+docker container rm -f demo
+
+#kubernetes : current context
+kubectl config get-contexts
+
+kubectl config use-context docker-for-desktop
+
+#helm
+brew install kubernetes-helm
+#or
+brew upgrade kubernetes-helm
+
+#upgrade server :
+helm init --upgrade
+#of
+helm init
+
+#install helm manifest
+helm install --name demo manifests/demo
+
+#pod is running
+kubectl get pods
+
+#service is up
+kubectl get svc
+
+#url of service
+kubectl get svc/demo-demo -o wide
+
+#delete app
+helm delete --purge demo
+
+#install istio and set to path
+
+#install istio on kubernetes
+helm install --wait --name istio --namespace istio-system install/kubernetes/helm/istio --set tracing.enabled=true --set grafana.enabled=true
+
+
+
+
+#EKS
+brew install weaveworks/tap/eksctl
+curl -o heptio-authenticator-aws https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/darwin/amd64/aws-iam-authenticator
+eksctl create cluster --name myeks --nodes 4 --region us-west-2
+
+
+
+#install helm
+kubectl -n kube-system create sa tiller
+kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+helm init --service-account tiller
+
+#show pods
+kubectl get pods -n kube-system
+
+#install
+helm install --name demo manifests/demo
+kubectl get svc/demo-demo -o wide
+
+#istio (make sure istio-1.*/bin is in your path) :
+helm install --wait --name istio --namespace istio-system install/kubernetes/helm/istio --set tracing.enabled=true --set grafana.enabled=true
+
+#default namespace, add sidecar injection
+kubectl label namespace default istio-injection=enabled
+
+#run regular app
+kubectl apply -f manifests/demo.yaml
+
+#see pods
+kubectl get pods -l app=demo
+
+#see containers
+kubectl get pods -l app=demo -o jsonpath={.items[*].spec.containers[*].name}
+
+#result
+curl http://$(kubectl get svc/demo -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')/hello
+
+
+#create cluster
+eksctl create cluster --name workshop-ms --nodes 4 --region us-west-2
+#nodegroup
+eksctl get nodegroup --cluster=workshop-eks
+#scale nodegroup
+eksctl scale nodegroup --cluster=workshop-eks --nodes=0 --name ng-2ea842fd
+#delete cluster
+eksctl delete cluster --name=workshop-eks
